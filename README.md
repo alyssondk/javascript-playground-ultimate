@@ -1,18 +1,22 @@
-# javascript-playground-ultimate
-# JS Playground Ultimate do Samuel Bueno
+# JS Playground GOLD
 
-O melhor playground de JavaScript offline do Brasil.
+O playground de JavaScript que todo professor sonha e todo aluno merece.
 
-Feito por um aluno de 13 anos que não aceita fazer coisas meia-boca.
-
-Recursos:
-- Editor profissional (CodeMirror)
+### Recursos ÉPICOS:
+- Editor profissional (CodeMirror + Dracula)
 - Execução 100% segura (iframe sandbox)
-- Suporte completo a console.log/warn/error/info
-- 17 exercícios prontos (básico ao avançado)
-- Acentuação perfeita em português
+- Suporte total a `console.log`, `.warn`, `.error`, `.info`
+- `prompt()` e `alert()` funcionando
+- 17 exercícios do básico ao avançado
 - Auto-save + Ctrl+Enter
-- Totalmente offline
+- Ajuste de fonte (A- / A+)
+- Botão Reiniciar Exercício
+- Design Gold Edition (porque você merece o melhor)
+- Totalmente offline · Zero internet · Zero limite
 
-Baixou = funciona. Sem internet, sem cadastro, sem limite.
-Feito com carinho para quem está aprendendo JavaScript de verdade.
+Feito com sangue, suor e JavaScript puro por **Samuel**, um garoto de 15 anos que decidiu que "bom" não era suficiente.
+
+Baixou = funciona.  
+Para sempre.
+
+Dedicação total. Resultado: perfeição.
