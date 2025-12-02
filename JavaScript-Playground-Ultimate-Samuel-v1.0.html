@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>JS Playground Gold</title>
+    
+    <!-- CodeMirror (Editor) -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/codemirror.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/theme/dracula.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/codemirror.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/mode/javascript/javascript.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/addon/edit/closebrackets.min.js"></script>
+
+    <style>
+        /* --- CSS GERAL --- */
+        :root { --bg-dark: #1e1e1e; --bg-panel: #2d2d2d; --accent: #007acc; --text: #d4d4d4; }
+        body { font-family: 'Segoe UI', sans-serif; background-color: var(--bg-dark); color: var(--text); margin: 0; display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
+        
+        /* HEADER */
+        header { background-color: var(--bg-panel); padding: 0 20px; height: 50px; border-bottom: 1px solid #111; display: flex; justify-content: space-between; align-items: center; }
+        .logo { font-weight: 700; color: #ffca28; display: flex; align-items: center; gap: 8px; letter-spacing: 1px; }
+        .logo span { font-size: 0.7rem; color: #fff; background: #007acc; padding: 2px 6px; border-radius: 4px; font-weight: normal; }
+        
+        .controls { display: flex; gap: 10px; align-items: center; }
+        select { background-color: #3c3c3c; color: white; padding: 6px 12px; border: 1px solid #555; border-radius: 4px; outline: none; cursor: pointer; max-width: 250px; }
+        
+        button.icon-btn { background: none; border: 1px solid #444; color: #aaa; cursor: pointer; padding: 5px 10px; border-radius: 4px; transition: 0.2s; font-size: 0.9rem; display: flex; align-items: center; gap: 5px; }
+        button.icon-btn:hover { background-color: #444; color: white; border-color: #666; }
+        button.icon-btn.danger:hover { background-color: #5a1e1e; color: #ff8080; border-color: #ff8080; }
+
+        /* MAIN */
+        .main-container { display: flex; flex: 1; overflow: hidden; position: relative; }
+        .editor-wrapper { flex: 1; display: flex; flex-direction: column; border-right: 1px solid #111; position: relative; }
+        .CodeMirror { flex: 1; height: auto; font-family: 'Fira Code', 'Consolas', monospace; font-size: 16px; line-height: 1.6; }
+        .console-wrapper { flex: 1; display: flex; flex-direction: column; background-color: #0d0d0d; min-width: 300px; border-left: 1px solid #333; }
+        
+        .panel-title { background: #252526; padding: 8px 15px; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 1px; color: #888; border-bottom: 1px solid #111; display: flex; justify-content: space-between; align-items: center; }
+        
+        #console-output { flex: 1; padding: 15px; overflow-y: auto; font-family: 'Consolas', monospace; font-size: 14px; scroll-behavior: smooth; }
+
+        /* LOGS */
+        .log-entry { padding: 6px 8px; border-bottom: 1px solid #222; white-space: pre-wrap; display: flex; gap: 8px; align-items: flex-start; line-height: 1.5; animation: fadeIn 0.2s ease; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
+        
+        .log-entry::before { content: "›"; color: #555; font-weight: bold; }
+        .log-error { background: rgba(255, 0, 0, 0.15); border-left: 3px solid #f14c4c; color: #ff8080; }
+        .log-error::before { content: "ⓧ"; color: #f14c4c; }
+        .log-warn { background: rgba(255, 152, 0, 0.1); border-left: 3px solid #ff9800; color: #ffca28; }
+        .log-warn::before { content: "⚠"; color: #ff9800; }
+        .log-info { background: rgba(97, 218, 251, 0.05); border-left: 3px solid #61dafb; }
+        .log-info::before { content: "ℹ"; color: #61dafb; }
+
+        .type-string { color: #ce9178; } .type-number { color: #b5cea8; } .type-boolean { color: #569cd6; } 
+        .type-undefined { color: #888; font-style: italic; } .type-object { color: #4ec9b0; }
+
+        .msg-system-error { color: #f14c4c; padding: 10px; background: rgba(255,0,0,0.1); border: 1px solid #f14c4c; margin: 10px 0; border-radius: 4px; }
+        .msg-success { color: #4caf50; font-style: italic; opacity: 0.7; font-size: 0.8rem; margin-top: 10px; border-top: 1px dashed #333; padding-top: 5px; text-align: center; }
+
+        /* FOOTER CONTROLS */
+        .footer-controls { position: fixed; bottom: 20px; left: 20px; display: flex; gap: 5px; z-index: 99; background: rgba(30,30,30,0.8); padding: 5px; border-radius: 5px; backdrop-filter: blur(2px); }
+        .font-btn { background: #333; color: #fff; border: 1px solid #555; width: 30px; height: 30px; border-radius: 4px; cursor: pointer; font-weight: bold; display: flex; align-items: center; justify-content: center; }
+        .font-btn:hover { background: #555; }
+
+        /* RUN BUTTON */
+        .run-btn { position: fixed; bottom: 25px; right: 25px; background-color: var(--accent); color: white; border: none; padding: 12px 24px; border-radius: 50px; font-size: 1rem; font-weight: 600; cursor: pointer; box-shadow: 0 4px 12px rgba(0,0,0,0.4); display: flex; align-items: center; gap: 8px; transition: all 0.2s; z-index: 100; }
+        .run-btn:hover { background-color: #0062a3; transform: scale(1.05); }
+        .run-btn:active { transform: scale(0.95); }
+
+        @media (max-width: 768px) { .main-container { flex-direction: column; } .editor-wrapper { height: 60%; } .run-btn { padding: 10px 20px; font-size: 0.9rem; } }
+    </style>
+</head>
+<body>
+
+    <header>
+        <div class="logo">⚡ JS Playground <span>GOLD</span></div>
+        <div class="controls">
+            <select id="exercise-select" onchange="carregarExercicio()">
+                <option value="livre">📝 Rascunho Livre</option>
+                <optgroup label="Nível Básico">
+                    <option value="ex1">1. Barraca de Limonada</option>
+                    <option value="ex2">2. Vendedor de Picolé</option>
+                    <option value="ex3">3. Catraca do Ônibus</option>
+                    <option value="ex4">4. Média Escolar</option>
+                    <option value="ex5">5. Food Truck (Switch)</option>
+                    <option value="ex6">6. Pet Shop (Booleano)</option>
+                    <option value="ex7">7. Padaria (Estoque)</option>
+                    <option value="ex8">8. Livraria (Cálculo)</option>
+                    <option value="ex9">9. Semáforo (Switch)</option>
+                    <option value="ex10">10. Conversor Temp</option>
+                </optgroup>
+                <optgroup label="Nível Avançado (Boss)">
+                    <option value="boss1">🏆 1. Pizzaria Complexa</option>
+                    <option value="boss2">🏆 2. Banco Rigoroso</option>
+                    <option value="boss3">🏆 3. App Transporte</option>
+                    <option value="boss4">🏆 4. Hotel de Luxo</option>
+                    <option value="boss5">🏆 5. Cinema Complexo</option>
+                    <option value="boss6">🏆 6. Login Seguro</option>
+                    <option value="boss7">🏆 7. Logística Frete</option>
+                </optgroup>
+            </select>
+            <button class="icon-btn danger" onclick="reiniciarExercicio()" title="Voltar ao código original do exercício">↺ Reiniciar</button>
+            <button class="icon-btn" onclick="limparConsole()" title="Limpar saída">🗑️ Limpar Console</button>
+        </div>
+    </header>
+
+    <div class="main-container">
+        <div class="editor-wrapper">
+            <div class="panel-title">Editor (JavaScript) <span style="font-size: 0.65rem; opacity: 0.5;">Ctrl + Enter para rodar</span></div>
+            <textarea id="code-editor"></textarea>
+            
+            <!-- Controles de Fonte -->
+            <div class="footer-controls">
+                <button class="font-btn" onclick="mudarFonte(-1)" title="Diminuir Fonte">A-</button>
+                <button class="font-btn" onclick="mudarFonte(1)" title="Aumentar Fonte">A+</button>
+            </div>
+        </div>
+        <div class="console-wrapper">
+            <div class="panel-title">Console Output</div>
+            <div id="console-output"></div>
+        </div>
+    </div>
+
+    <button class="run-btn" onclick="executarCodigoSeguro()">▶ Executar</button>
+
+    <script>
+        // CONFIGURAÇÃO INICIAL
+        let fontSize = 16;
+        const editor = CodeMirror.fromTextArea(document.getElementById("code-editor"), {
+            mode: "javascript", theme: "dracula", lineNumbers: true, autoCloseBrackets: true, matchBrackets: true, tabSize: 4, indentUnit: 4, lineWrapping: true
+        });
+        const outputDiv = document.getElementById('console-output');
+
+        // BANCO DE EXERCÍCIOS
+        const exerciciosDB = {
+            'livre': "// Teste de Interatividade:\n// Tente usar prompt e alert!\n\nlet nome = prompt('Qual é o seu nome, Mestre do Código?');\n\nif (nome) {\n    alert('Bem-vindo, ' + nome + '!');\n    console.log('Usuário logado: ' + nome);\n} else {\n    console.warn('Usuário não quis dizer o nome.');\n}",
+            'ex1': `// EXERCÍCIO 1: BARRACA DE LIMONADA 🍋\nlet coposVendidos = 10;\nlet precoPorCopo = 5;\nlet custoDeProducao = 20;\nlet lucro = (coposVendidos * precoPorCopo) - custoDeProducao;\nconsole.log("O lucro do dia foi: R$ " + lucro);`,
+            'ex2': `// EXERCÍCIO 2: VENDEDOR DE PICOLÉ 🍦\nlet estoqueUva = 0;\nif (estoqueUva > 0) {\n    console.log("Venda realizada!");\n} else {\n    console.warn("Estoque zerado!");\n}`,
+            'ex3': `// EXERCÍCIO 3: CATRACA DO ÔNIBUS 🚌\nlet saldo = 3.50;\nlet preco = 4.40;\nlet msg = (saldo >= preco) ? "Liberada" : "Bloqueada";\nif(saldo < preco) console.error("Saldo insuficiente!");\nconsole.log(msg);`,
+            'ex4': `// EXERCÍCIO 4: MÉDIA ESCOLAR 📝\nlet notaTexto = "8";\nlet nota = Number(notaTexto);\nif (nota >= 6) console.log("Aprovado"); else console.log("Recuperação");`,
+            'ex5': `// EXERCÍCIO 5: FOOD TRUCK 🍔\nlet codigo = 2;\nswitch (codigo) {\n    case 1: console.log("X-Burguer"); break;\n    case 2: console.log("X-Salada"); break;\n    case 3: console.log("X-Bacon"); break;\n    default: console.error("Lanche desconhecido.");\n}`,
+            'ex6': `// EXERCÍCIO 6: PET SHOP 🐶\nlet nome = "Rex";\nlet precisaBanho = true;\nif (precisaBanho) console.log(nome + " vai pro banho!"); else console.log(nome + " está limpo.");`,
+            'ex7': `// EXERCÍCIO 7: PADARIA 🥖\nlet estoque = 5;\nlet pedido = 3;\nif (estoque >= pedido) { estoque -= pedido; console.log("Venda OK. Restam: " + estoque); } else console.warn("Falta pão!");`,
+            'ex8': `// EXERCÍCIO 8: LIVRARIA 📚\nlet preco = 40; let desc = 5; console.log("Preço final: R$ " + (preco - desc));`,
+            'ex9': `// EXERCÍCIO 9: SEMÁFORO 🚦\nlet cor = "Amarelo";\nswitch(cor){ case "Verde": console.log("Siga"); break; case "Amarelo": console.warn("Atenção"); break; case "Vermelho": console.error("PARE"); break; }`,
+            'ex10': `// EXERCÍCIO 10: TEMPERATURA 🌡️\nlet c = 30; let f = (c * 9/5) + 32; console.log(c + "°C = " + f + "°F");`,
+            'boss1': `// BOSS 1: PIZZARIA COMPLEXA 🍕\nlet tamanho = "Média";\nlet querBorda = true;\nlet total = 0;\nswitch (tamanho) { case "Média": total = 30; break; }\nif (querBorda) { total += 5; console.info("Borda adicionada."); }\nconsole.log("Total: " + total);`,
+            'boss2': `// BOSS 2: BANCO RIGOROSO 🏦\nlet saldo = 1000;\nlet saque = 1200;\nif (saldo >= saque) { saldo -= saque; console.log("Saque OK"); } else { console.error("Saldo insuficiente."); }`,
+            'boss3': `// BOSS 3: APP TRANSPORTE 🚗\nlet km = 10; let chuva = true; let preco = 5 + (km*2); if(chuva) preco *= 1.5; console.log("Total: R$ " + preco);`,
+            'boss4': `// BOSS 4: HOTEL 🏨\nlet dias = 3; let cafe = true; let total = (200 * dias); if(cafe) total += (50*dias); console.log("Conta: R$ " + total);`,
+            'boss5': `// BOSS 5: CINEMA 🍿\nlet idade = 15; let dia = "Terca"; let preco = 30; if(dia==="Terca" || idade<18) preco = 15; console.log("Ingresso: R$ " + preco);`,
+            'boss6': `// BOSS 6: LOGIN 🔒\nlet user="admin"; let pass=1234; if(user==="admin" && pass===1234) console.log("Logado!"); else console.error("Acesso Negado.");`,
+            'boss7': `// BOSS 7: FRETE 🚚\nlet peso=12; let frete=20; if(peso>10) frete+=15; console.log("Frete: R$ " + frete);`
+        };
+
+        // EXECUÇÃO (SANDBOX)
+        function executarCodigoSeguro() {
+            outputDiv.innerHTML = '';
+            const codigoUsuario = editor.getValue();
+            if (!codigoUsuario.trim()) { imprimirNoConsole("O editor está vazio!", "error"); return; }
+
+            const iframe = document.createElement('iframe');
+            iframe.style.display = 'none';
+            // PERMISSÃO CRÍTICA: allow-modals permite alert e prompt
+            iframe.sandbox = 'allow-scripts allow-modals'; 
+            document.body.appendChild(iframe);
+
+            const codigoInterno = `
+                <!DOCTYPE html>
+                <html lang="pt-BR">
+                <head><meta charset="UTF-8"></head>
+                <body>
+                <script>
+                    function enviarLog(estilo, args) {
+                        const argsProcessados = args.map(arg => {
+                             if (arg === null) return { type: 'null', val: 'null' };
+                             if (arg === undefined) return { type: 'undefined', val: 'undefined' };
+                             if (typeof arg === 'object' && arg !== null) {
+                             return { type: 'object', val: JSON.stringify(arg, null, 2) };
+                             }
+                             if (typeof arg === 'string') return { type: 'string', val: arg };
+                             return { type: typeof arg, val: String(arg) };
+                        });
+                        parent.postMessage({ type: 'log', dados: argsProcessados, estilo: estilo }, '*');
+                    }
+                    console.log   = (...args) => enviarLog('log', args);
+                    console.error = (...args) => enviarLog('error', args);
+                    console.warn  = (...args) => enviarLog('warn', args);
+                    console.info  = (...args) => enviarLog('info', args);
+
+                    try {
+                        ${codigoUsuario}
+                        parent.postMessage({ type: 'success' }, '*');
+                    } catch (err) {
+                        parent.postMessage({ type: 'error', msg: err.message }, '*');
+                    }
+                <\/script>
+                </body>
+                </html>
+            `;
+
+            const blob = new Blob([codigoInterno], { type: 'text/html;charset=utf-8' });
+            iframe.src = URL.createObjectURL(blob);
+
+            const messageHandler = function(e) {
+                const data = e.data;
+                if (data.type === 'log') {
+                    const linha = document.createElement('div');
+                    linha.className = 'log-entry';
+                    if (data.estilo === 'error') linha.classList.add('log-error');
+                    if (data.estilo === 'warn')  linha.classList.add('log-warn');
+                    if (data.estilo === 'info')  linha.classList.add('log-info');
+
+                    data.dados.forEach((item, i) => {
+                        if (i > 0) linha.appendChild(document.createTextNode(' '));
+                        const span = document.createElement('span');
+                        if (item.type === 'string') { span.textContent = item.val; span.className = 'type-string'; }
+                        else { span.textContent = item.val; if (data.estilo === 'log') span.className = 'type-' + item.type; }
+                        linha.appendChild(span);
+                    });
+                    outputDiv.appendChild(linha);
+                } 
+                else if (data.type === 'error') { imprimirNoConsole("Erro de Execução: " + data.msg, "error"); }
+                else if (data.type === 'success') {
+                    const fim = document.createElement('div');
+                    fim.className = 'msg-success';
+                    fim.textContent = '--- Execução finalizada ---';
+                    outputDiv.appendChild(fim);
+                    window.removeEventListener('message', messageHandler);
+                    setTimeout(() => { document.body.removeChild(iframe); URL.revokeObjectURL(iframe.src); }, 100);
+                }
+                outputDiv.scrollTop = outputDiv.scrollHeight;
+            };
+            window.addEventListener('message', messageHandler);
+        }
+
+        // CONTROLES
+        function imprimirNoConsole(msg, tipo) {
+            const div = document.createElement('div');
+            if (tipo === 'error') { div.className = 'msg-system-error'; div.textContent = msg; }
+            else { div.className = 'log-entry'; div.textContent = msg; }
+            outputDiv.appendChild(div);
+        }
+        function limparConsole() { outputDiv.innerHTML = ''; }
+        
+        function carregarExercicio() {
+            const select = document.getElementById('exercise-select');
+            if (editor.getValue().trim() !== "" && !confirm("Deseja trocar de exercício? O código atual não salvo será perdido.")) {
+                // Se cancelar, volta a seleção anterior (opcional, aqui simplificado)
+                return;
+            }
+            editor.setValue(exerciciosDB[select.value]);
+            salvarCodigo();
+            limparConsole();
+        }
+
+        function reiniciarExercicio() {
+            const select = document.getElementById('exercise-select');
+            if(confirm("Tem certeza que quer reiniciar este exercício? Todo o seu progresso nele será apagado.")) {
+                editor.setValue(exerciciosDB[select.value]);
+                salvarCodigo();
+                limparConsole();
+            }
+        }
+
+        function mudarFonte(delta) {
+            fontSize += delta;
+            if (fontSize < 10) fontSize = 10;
+            if (fontSize > 30) fontSize = 30;
+            // Aplica no CodeMirror
+            document.querySelector('.CodeMirror').style.fontSize = fontSize + 'px';
+            editor.refresh();
+            // Aplica no Console
+            document.getElementById('console-output').style.fontSize = (fontSize - 2) + 'px'; // Console um pouco menor
+        }
+
+        // PERSISTÊNCIA
+        function salvarCodigo() { localStorage.setItem('js-playground-gold', editor.getValue()); }
+        function carregarCodigoSalvo() {
+            const salvo = localStorage.getItem('js-playground-gold');
+            if (salvo) editor.setValue(salvo); else editor.setValue(exerciciosDB['livre']);
+        }
+
+        editor.on('change', salvarCodigo);
+        document.addEventListener('keydown', function(e) { if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') executarCodigoSeguro(); });
+        window.onload = carregarCodigoSalvo;
+    </script>
+</body>
+</html>
